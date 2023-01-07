@@ -1,0 +1,22 @@
+{
+    "name": "LeetCode Forcer",
+    "version": "1.0",
+    "description": "An extension which force you to do leetcode problem ",
+    "manifest_version": 3,
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "permissions": [
+        "tabs",
+        "activeTab",
+        "scripting",
+        "storage",
+        "webRequest"
+      
+    ],
+    "host_permissions": ["https://*/"],
+    "background": {
+        "service_worker": "background.js",
+        "type": "module"
+      }
+}

@@ -1,4 +1,4 @@
-let LEETCODE_API_ENDPOINT = 'https://leetcode.com/graphql'
+let LEETCODE_API_ENDPOINT = "https://leetcode.com/graphql";
 let DAILY_CODING_CHALLENGE_QUERY = `
 query globalData {
   feature {
@@ -70,50 +70,66 @@ query globalData {
   sitewideAnnouncement
   userCountryCode
 }
-`
+`;
 
+// this function will retry for 3 times if any error occur while fetching the leetcode graphql 
 let fetchDailyCodingChallenge = async () => {
-    // console.log(`Fetching daily coding challenge from LeetCode API.`)
-    const init = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+  let retries = 3;
+  let success = false;
+  while (retries > 0 && !success) {
+    try {
+      // console.log(`Fetching daily coding challenge from LeetCode API.`)
+      const init = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: DAILY_CODING_CHALLENGE_QUERY }),
+      };
+    
+      const response = await fetch(LEETCODE_API_ENDPOINT, init);
+      success = true;
+      return response.json();
+
+    } catch (error) {
+      console.log(`Error: ${error}. Retrying...`);
+      retries--;
     }
-  
-    const response = await fetch(LEETCODE_API_ENDPOINT, init);
-    return response.json();
   }
-  
+
+  if (!success) {
+    console.log('Failed to call API after 3 retries');
+  }
+};
 
 function leetcodeForcer() {
-        let leetcodeData = fetchDailyCodingChallenge();
-        leetcodeData.then(data => {
-       if(data.data.userStatus.isSignedIn) {
-           if(!data.data.streakCounter.currentDayCompleted) {
-               chrome.tabs.query({currentWindow: true, active: true}, function(tabs){
-                   let domain = (new URL(tabs[0].url));
-                   domain = domain.hostname;
-                   console.log(domain);  
-                       if(!domain.includes('leetcode')) { // if domain is not leetcode redirect to leetcode.com
-                           chrome.tabs.update({url: 'http://leetcode.com'});
-                           }
-                   });
-           }
-       }
-
-    });
-    };
+  let leetcodeData = fetchDailyCodingChallenge();
+  leetcodeData.then((data) => {
+    if (data.data.userStatus.isSignedIn) {
+      if (!data.data.streakCounter.currentDayCompleted) {
+        chrome.tabs.query(
+          { currentWindow: true, active: true },
+          function (tabs) {
+            let domain = new URL(tabs[0].url);
+            domain = domain.hostname;
+            if (!domain.includes("leetcode")) {
+              // if domain is not leetcode redirect to leetcode.com
+              chrome.tabs.update({ url: "http://leetcode.com" });
+            }
+          }
+        );
+      }
+    }
+  });
+}
 
 // this chrome api works when someone updated the tab
 chrome.tabs.onUpdated.addListener(function (tabId, tabInfo, tab) {
-    if (tab.url !== undefined && tabInfo.status === "complete" ) {
-        console.log("I am in updatted");
-        leetcodeForcer();
-    }
+  if (tab.url !== undefined && tabInfo.status === "complete") {
+    // console.log("I am in updatted");
+    leetcodeForcer();
+  }
 });
 
-// this chrome api works on active tab
-chrome.tabs.onActivated.addListener(function (tabId, tabInfo, tab) {
-    console.log("I am in activated");
-    leetcodeForcer();
+//this chrome api works when tab will become activated e.g. when someone creates new tab
+chrome.tabs.onActivated.addListener(function () {
+  leetcodeForcer();
 });

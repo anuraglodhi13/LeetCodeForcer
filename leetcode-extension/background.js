@@ -72,7 +72,7 @@ query globalData {
 }
 `;
 
-// this function will retry for 3 times if any error occur while fetching the leetcode graphql 
+// this function will retry for 3 times if any error occur while fetching the leetcode graphql
 let fetchDailyCodingChallenge = async () => {
   let retries = 3;
   let success = false;
@@ -84,11 +84,10 @@ let fetchDailyCodingChallenge = async () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: DAILY_CODING_CHALLENGE_QUERY }),
       };
-    
+
       const response = await fetch(LEETCODE_API_ENDPOINT, init);
       success = true;
       return response.json();
-
     } catch (error) {
       console.log(`Error: ${error}. Retrying...`);
       retries--;
@@ -96,14 +95,15 @@ let fetchDailyCodingChallenge = async () => {
   }
 
   if (!success) {
-    console.log('Failed to call API after 3 retries');
+    console.log("Failed to call API after 3 retries");
   }
 };
 
+// this function will redirect to leetcode.com
 function leetcodeForcer() {
   let leetcodeData = fetchDailyCodingChallenge();
   leetcodeData.then((data) => {
-    if (data.data.userStatus.isSignedIn) {
+    if (data !== undefined && data.data.userStatus.isSignedIn) {
       if (!data.data.streakCounter.currentDayCompleted) {
         chrome.tabs.query(
           { currentWindow: true, active: true },
@@ -121,15 +121,35 @@ function leetcodeForcer() {
   });
 }
 
+// this function will handle the emergency button functionality
+function emergencyButtonHandle() {
+  chrome.storage.local.get("storedTime", function (items) {
+    if (items.storedTime !== undefined || items.storedTime === null) {
+      // emergency button is clicked make sure that if current time is 3 hours more than last stored time (time when someone clicked the button) 
+      // then leetcode forcing will start else don't do anything
+      var lastStoredDate = new Date(items.storedTime);
+      var currentTime = new Date();
+      var diffTime = lastStoredDate - currentTime;
+      if (diffTime <= 0) {
+        chrome.storage.local.remove("storedTime"); // removing the stored time as now it's work is done, so if someone again open or update the tab storedTime will become undefined and this function will go to leetcodeForcer()
+        leetcodeForcer();
+      }
+    } else {
+      // emergency button is not clicked yet
+      leetcodeForcer();
+    }
+  });
+}
+
 // this chrome api works when someone updated the tab
 chrome.tabs.onUpdated.addListener(function (tabId, tabInfo, tab) {
   if (tab.url !== undefined && tabInfo.status === "complete") {
-    // console.log("I am in updatted");
-    leetcodeForcer();
+    // to call only once. No need for this in onActivated as that api call once by default
+    emergencyButtonHandle();
   }
 });
 
 //this chrome api works when tab will become activated e.g. when someone creates new tab
 chrome.tabs.onActivated.addListener(function () {
-  leetcodeForcer();
+  emergencyButtonHandle();
 });

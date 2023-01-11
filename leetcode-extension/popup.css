@@ -6,3 +6,25 @@
     font-size: medium;
     padding: 20px;
 }
+
+.emergency-button {
+    display: inline-block;
+    background-color: red;
+    color: white;
+    border: none;
+    text-align: center;
+    padding: 7px;
+    font-size: medium;
+    cursor: pointer;
+    opacity: 1;
+    /* fully opaque when enabled */
+    border-radius: 50%;
+    width: 95px;
+    height: 95px;
+}
+
+.emergency-button:disabled {
+    opacity: 0.5;
+    /* 50% opaque when disabled */
+    cursor: not-allowed;
+}

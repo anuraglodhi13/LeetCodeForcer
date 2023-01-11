@@ -6,10 +6,15 @@
     "action": {
         "default_popup": "popup.html"
     },
+    "externally_connectable": {
+        "matches": ["*://*.google.com/*"]
+    },    
     "permissions": [
         "tabs",
         "activeTab",
-        "webRequest"
+        "webRequest",
+        "storage",
+        "alarms"
       
     ],
     "host_permissions": ["https://*/"],

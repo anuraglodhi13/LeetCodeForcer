@@ -34,7 +34,7 @@ function updateTimer() {
     }
     });
 }
-setInterval(updateTimer, 1000); // setInterval to show the timer.
+setInterval(updateTimer, 1000); // setInterval to show the timer for every second.
 
 // this function will make sure that emergency button can be pressed once in a day.
 chrome.storage.local.get('storedDate', function(items) {

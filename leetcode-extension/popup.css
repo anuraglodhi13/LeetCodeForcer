@@ -3,12 +3,12 @@
     margin: 30px auto;
     background-color: hsl(0, 0%, 100%);
     border-radius: 10px;
-    font-size: medium;
+    font-size: 13px;
     padding: 20px;
 }
 
 .emergency-button {
-    display: inline-block;
+    /* display: inline-block; */
     background-color: red;
     color: white;
     border: none;
@@ -17,14 +17,23 @@
     font-size: medium;
     cursor: pointer;
     opacity: 1;
-    /* fully opaque when enabled */
     border-radius: 50%;
     width: 95px;
     height: 95px;
+    float: left;
 }
 
 .emergency-button:disabled {
     opacity: 0.5;
-    /* 50% opaque when disabled */
     cursor: not-allowed;
+}
+
+.disable-message {
+    display: none;
+    padding: 30px;
+    padding-left: 110px;
+}
+.emergency-message {
+    padding: 20px;
+    padding-left: 110px;
 }

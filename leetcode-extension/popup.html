@@ -8,13 +8,16 @@
 <body>
   <main>
     <div class="wrap">
-      <button id="myButton" class="emergency-button">Emergency</button>
-      <span class="disable-message">Button is disabled</span>
-      <div id="timer" style="display: none;"></div>
       <p>
         Hi Leetcoder, I hope you are doing well.<br /> <br />
-        <b> Please remain signed in on leetcode, </b> so that I can help you to maintain streak on it.
+        <b> Please remain signed in on leetcode, </b> <br/>so that I can help you to maintain streak on it.
       </p>
+      <p id="countdown" style="display: none; color: #53bb74;"> </p>
+     
+      <button id="myButton" class="emergency-button">Emergency
+      </button>
+      <p id="emergency-message" class = "emergency-message"> <b> You can press emergency <br> button to stop leetcode forcing.</br></p>
+      <p id="disable-message" class = "disable-message"> <b> You can use emergency <br> button once in a day.</br></p>
     </div>
   </main>
   <script src="popup.js"></script>

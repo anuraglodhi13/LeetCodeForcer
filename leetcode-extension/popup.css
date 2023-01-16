@@ -1,14 +1,16 @@
 .wrap {
     width: 300px;
-    margin: 30px auto;
     background-color: hsl(0, 0%, 100%);
-    border-radius: 10px;
     font-size: 13px;
     padding: 20px;
+    border-style: solid;
 }
 
+hr.solid {
+    border-top: 1px solid #bbb;
+  }
+
 .emergency-button {
-    /* display: inline-block; */
     background-color: red;
     color: white;
     border: none;

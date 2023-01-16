@@ -4,6 +4,7 @@
     "description": "An extension which force you to do leetcode problem ",
     "manifest_version": 3,
     "action": {
+        "default_icon": "images/icon.png",
         "default_popup": "popup.html"
     },
     "externally_connectable": {

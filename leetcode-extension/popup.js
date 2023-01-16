@@ -7,7 +7,7 @@ function updateTimer() {
     chrome.storage.local.get("storedTime", function (items) {
          // emergency button is clicked make sure that if current time is 3 hours more than last stored time (time when someone clicked the button) 
           // then timer will start else nothing
-        if (items.storedTime !== undefined || items.storedTime === null) {
+        if (items.storedTime) {
           var lastStoredDate = new Date(items.storedTime);
           var currentTime = new Date();
           var diffTime = lastStoredDate - currentTime;

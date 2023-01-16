@@ -103,6 +103,7 @@ let fetchDailyCodingChallenge = async () => {
 function leetcodeForcer() {
   let leetcodeData = fetchDailyCodingChallenge();
   leetcodeData.then((data) => {
+    console.log(data.data);
     if (data !== undefined && data.data.userStatus.isSignedIn) {
       if (!data.data.streakCounter.currentDayCompleted) {
         chrome.tabs.query(
@@ -118,13 +119,16 @@ function leetcodeForcer() {
         );
       }
     }
+    // else if (data !== undefined && !data.data.userStatus.isSignedIn) {
+    //   chrome.tabs.update({ url: "https://leetcode.com" });
+    // }
   });
 }
 
 // this function will handle the emergency button functionality
 function emergencyButtonHandle() {
   chrome.storage.local.get("storedTime", function (items) {
-    if (items.storedTime !== undefined || items.storedTime === null) {
+    if (items.storedTime) {
       // emergency button is clicked make sure that if current time is 3 hours more than last stored time (time when someone clicked the button) 
       // then leetcode forcing will start else don't do anything
       var lastStoredDate = new Date(items.storedTime);
@@ -140,12 +144,12 @@ function emergencyButtonHandle() {
     }
   });
 }
-
 // this chrome api works when someone updated the tab
 chrome.tabs.onUpdated.addListener(function (tabId, tabInfo, tab) {
   if (tab.url !== undefined && tabInfo.status === "complete") {
     // to call only once. No need for this in onActivated as that api call once by default
     emergencyButtonHandle();
+    
   }
 });
 

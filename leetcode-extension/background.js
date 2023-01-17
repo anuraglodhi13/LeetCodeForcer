@@ -1,79 +1,20 @@
 let LEETCODE_API_ENDPOINT = "https://leetcode.com/graphql";
-let DAILY_CODING_CHALLENGE_QUERY = `
-query globalData {
-  feature {
-    questionTranslation
-    subscription
-    signUp
-    discuss
-    mockInterview
-    contest
-    store
-    chinaProblemDiscuss
-    socialProviders
-    studentFooter
-    enableChannels
-    dangerZone
-    enableSharedWorker
-    enableRecaptchaV3
-    enableDebugger
-    enableDebuggerPremium
-    enableAutocomplete
-    enableAutocompletePremium
-    enableAllQuestionsRaw
-    autocompleteLanguages
-    enableIndiaPricing
-    enableReferralDiscount
-    maxTimeTravelTicketCount
-    enableStoreShippingForm
-    enableCodingChallengeV2
-    __typename
-  }
+let LEETCODE_GRAPHQL_QUERY = `
+query {
   streakCounter {
-    streakCount
-    daysSkipped
     currentDayCompleted
-    __typename
   }
-  currentTimestamp
   userStatus {
     isSignedIn
-    isAdmin
-    isStaff
-    isSuperuser
-    isMockUser
-    isTranslator
-    isPremium
-    isVerified
-    checkedInToday
-    username
-    realName
-    avatar
-    optedIn
-    requestRegion
-    region
-    activeSessionId
-    permissions
-    notificationStatus {
-      lastModified
-      numUnread
-      __typename
-    }
-    completedFeatureGuides
-    __typename
   }
-  siteRegion
-  chinaHost
-  websocketUrl
-  recaptchaKey
-  recaptchaKeyV2
-  sitewideAnnouncement
-  userCountryCode
+  activeDailyCodingChallengeQuestion {
+    link
+  }
 }
 `;
 
 // this function will retry for 3 times if any error occur while fetching the leetcode graphql
-let fetchDailyCodingChallenge = async () => {
+let fetchLeetcodeData = async () => {
   let retries = 3;
   let success = false;
   while (retries > 0 && !success) {
@@ -82,7 +23,7 @@ let fetchDailyCodingChallenge = async () => {
       const init = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: DAILY_CODING_CHALLENGE_QUERY }),
+        body: JSON.stringify({ query: LEETCODE_GRAPHQL_QUERY }),
       };
 
       const response = await fetch(LEETCODE_API_ENDPOINT, init);
@@ -101,10 +42,10 @@ let fetchDailyCodingChallenge = async () => {
 
 // this function will redirect to leetcode.com
 function leetcodeForcer() {
-  let leetcodeData = fetchDailyCodingChallenge();
+  let leetcodeData = fetchLeetcodeData();
   leetcodeData.then((data) => {
-    console.log(data.data);
     if (data !== undefined && data.data.userStatus.isSignedIn) {
+      // if signed in and current day is not completed redirect to leetcode daily challenge problem
       if (!data.data.streakCounter.currentDayCompleted) {
         chrome.tabs.query(
           { currentWindow: true, active: true },
@@ -112,17 +53,29 @@ function leetcodeForcer() {
             let domain = new URL(tabs[0].url);
             domain = domain.hostname;
             if (!domain.includes("leetcode")) {
-              // if domain is not leetcode redirect to leetcode.com
-              chrome.tabs.update({ url: "http://leetcode.com" });
+              chrome.tabs.update({ url: "http://leetcode.com"+data.data.activeDailyCodingChallengeQuestion.link});
             }
           }
         );
       }
     }
-    // else if (data !== undefined && !data.data.userStatus.isSignedIn) {
-    //   chrome.tabs.update({ url: "https://leetcode.com" });
-    // }
-  });
+    else if (data !== undefined && !data.data.userStatus.isSignedIn) {
+      chrome.tabs.query(
+        { currentWindow: true, active: true },
+        function (tabs) {
+          let domain = new URL(tabs[0].url);
+          domain = domain.hostname;
+          if (!domain.includes("leetcode")) {
+            // if not signed in and domain is not leetcode redirect to leetcode.com
+            chrome.tabs.update({ url: "http://leetcode.com" });
+          }
+        }
+      );
+    }
+  })
+  .catch( // some error occurs while doing leetcode forcing catch and log in console
+    error => console.log("Error while doing leetcode forcing ,"+error)
+  );;
 }
 
 // this function will handle the emergency button functionality
@@ -144,12 +97,12 @@ function emergencyButtonHandle() {
     }
   });
 }
+
 // this chrome api works when someone updated the tab
-chrome.tabs.onUpdated.addListener(function (tabId, tabInfo, tab) {
-  if (tab.url !== undefined && tabInfo.status === "complete") {
-    // to call only once. No need for this in onActivated as that api call once by default
+chrome.tabs.onUpdated.addListener(function (tabId, tabInfo, tab) { 
+   // to call only once. No need for this in onActivated as that api call once by default
+  if (tab.url !== undefined && tabInfo.status === "complete") { //onUpdated renders multiple time due to iframe tags so to only do leetcode forcing once check tab status is completed or not
     emergencyButtonHandle();
-    
   }
 });
 

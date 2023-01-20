@@ -45,6 +45,11 @@ function leetcodeForcer() {
   let leetcodeData = fetchLeetcodeData();
   leetcodeData.then((data) => {
     if (data !== undefined && data.data.userStatus.isSignedIn) {
+
+      if(data.data.streakCounter.currentDayCompleted) { 
+        chrome.storage.local.set({todayDateAfterChallenegeComplete: new Date().toDateString()}); // if todays challenge is completed save today's date and use it if user is signed out
+      }
+
       // if signed in and current day is not completed redirect to leetcode daily challenge problem
       if (!data.data.streakCounter.currentDayCompleted) {
         chrome.tabs.query(
@@ -59,18 +64,43 @@ function leetcodeForcer() {
         );
       }
     }
+    
     else if (data !== undefined && !data.data.userStatus.isSignedIn) {
-      chrome.tabs.query(
-        { currentWindow: true, active: true },
-        function (tabs) {
-          let domain = new URL(tabs[0].url);
-          domain = domain.hostname;
-          if (!domain.includes("leetcode")) {
-            // if not signed in and domain is not leetcode redirect to leetcode.com
-            chrome.tabs.update({ url: "http://leetcode.com" });
+      chrome.storage.local.get('todayDateAfterChallenegeComplete', function(items) {
+        
+        if(items.todayDateAfterChallenegeComplete === undefined ) { // if challengne is not completed and logged out redirect to leetcode for sign in.
+          chrome.tabs.query(
+            { currentWindow: true, active: true },
+            function (tabs) {
+              let domain = new URL(tabs[0].url);
+              domain = domain.hostname;
+              if (!domain.includes("leetcode")) {
+                // if not signed in and domain is not leetcode redirect to leetcode.com
+                chrome.tabs.update({ url: "http://leetcode.com" });
+              }
+            }
+          );
+        }
+        else { 
+          // check if day has been change and leetcoder is signed out then remove the todayDateAfterChallenegeComplete and redirect once from here.
+          const lastStoredDate = items.todayDateAfterChallenegeComplete;
+          const todayDate = new Date().toDateString();
+          if(lastStoredDate !== undefined && new Date(lastStoredDate) < new Date(todayDate)) { // if last sotred date is less than today's date that means day has been changed need to remove last date and do redirection.
+            chrome.storage.local.remove("todayDateAfterChallenegeComplete"); // removed on new day and it become undefined so that it can redirect further to leetcode for sign in from above if condition.
+            chrome.tabs.query( 
+              { currentWindow: true, active: true },
+              function (tabs) {
+                let domain = new URL(tabs[0].url);
+                domain = domain.hostname;
+                if (!domain.includes("leetcode")) {
+                  // if not signed in and domain is not leetcode redirect to leetcode.com
+                  chrome.tabs.update({ url: "http://leetcode.com" });
+                }
+              }
+            );
           }
         }
-      );
+    });
     }
   })
   .catch( // some error occurs while doing leetcode forcing catch and log in console

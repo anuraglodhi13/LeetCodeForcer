@@ -1,1 +1,3 @@
 # LeetCodeExtension
+Reason why we used tabInfo.status === "complete" in onUpdated event in backgorund.js 
+The chrome.onUpdated event in a Chrome extension can fire multiple times due to iFrame tags because the iFrame tags can cause the extension to be reloaded. An iFrame (short for inline frame) is an HTML element that allows a webpage to embed another webpage within itself. When an iFrame is loaded, it can cause the parent page and any extensions that are running on that page to also be reloaded, which can cause the chrome.onUpdated event to fire again. This behavior is intended and is not a bug.

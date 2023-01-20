@@ -14,9 +14,7 @@
         "tabs",
         "activeTab",
         "webRequest",
-        "storage",
-        "alarms"
-      
+        "storage"
     ],
     "host_permissions": ["https://*/"],
     "background": {

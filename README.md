@@ -5,5 +5,5 @@ To motivate you to tackle the daily Leetcode challenge, we have developed this e
 
 What is the function of this extension?
 
-1. After installing, if you browse anything on chome and you have not solved the problem for a day it will redirect to that. Basically, it's virtual implementation of the principles outlined in book 'Eat That Frog'.
+1. After installing, if you browse anything on chrome and you have not solved the problem for a day it will redirect to that. Basically, it's virtual implementation of the principles outlined in book 'Eat That Frog'.
 2. In case of an urgent need to browse, the extension includes an emergency button that can be used once per day to temporarily disable the redirection to Leetcode for a period of 3 hours.

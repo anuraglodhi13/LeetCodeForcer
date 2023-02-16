@@ -1,3 +1,6 @@
+Download this extension 👇🏻
+https://chrome.google.com/webstore/detail/leetcode-forcer/bfhandefodflloblgbmckmildnmangcb?hl=en
+
 # LeetCodeExtension
 Occasionally, we all make a commitment to solve at least one problem daily on Leetcode. However, in today's fast-paced and distracting world, it can be challenging to stick to this commitment despite having made it multiple times.
 

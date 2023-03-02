@@ -6,14 +6,9 @@
     "action": {
         "default_icon": "images/icon.png",
         "default_popup": "popup.html"
-    },
-    "externally_connectable": {
-        "matches": ["*://*.google.com/*"]
-    },    
+    },   
     "permissions": [
         "tabs",
-        "activeTab",
-        "webRequest",
         "storage"
     ],
     "host_permissions": ["https://*/"],

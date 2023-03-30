@@ -15,9 +15,9 @@ query {
 
 // this function will retry for 3 times if any error occur while fetching the leetcode graphql
 let fetchLeetcodeData = async () => {
-  let retries = 3;
-  let success = false;
-  while (retries > 0 && !success) {
+  let numRetries = 3;
+  let isSuccessful = false;
+  while (numRetries > 0 && !isSuccessful) {
     try {
       // console.log(`Fetching daily coding challenge from LeetCode API.`)
       const init = {
@@ -27,15 +27,15 @@ let fetchLeetcodeData = async () => {
       };
 
       const response = await fetch(LEETCODE_API_ENDPOINT, init);
-      success = true;
+      isSuccessful = true;
       return response.json();
     } catch (error) {
       console.log(`Error: ${error}. Retrying...`);
-      retries--;
+      numRetries--;
     }
   }
 
-  if (!success) {
+  if (!isSuccessful) {
     console.log("Failed to call API after 3 retries");
   }
 };

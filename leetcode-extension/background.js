@@ -30,13 +30,13 @@ let fetchLeetcodeData = async () => {
       isSuccessful = true;
       return response.json();
     } catch (error) {
-      console.log(`Error: ${error}. Retrying...`);
+      console.error(`Error: ${error}. Retrying...`);
       numRetries--;
     }
   }
 
   if (!isSuccessful) {
-    console.log("Failed to call API after 3 retries");
+    console.error("Failed to call API after 3 retries");
   }
 };
 
@@ -104,7 +104,7 @@ function leetcodeForcer() {
     }
   })
   .catch( // some error occurs while doing leetcode forcing catch and log in console
-    error => console.log("Error while doing leetcode forcing ,"+error)
+    error => console.error("Error while doing leetcode forcing ,"+error)
   );;
 }
 

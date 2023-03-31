@@ -1,46 +1,60 @@
 let LEETCODE_API_ENDPOINT = "https://leetcode.com/graphql";
 let LEETCODE_GRAPHQL_QUERY = `
-query {
+query globalData {
   streakCounter {
     currentDayCompleted
   }
   userStatus {
     isSignedIn
+    username
   }
   activeDailyCodingChallengeQuestion {
     link
   }
 }
 `;
+let LEETCODE_ALL_PROBLEMS_QUERY = `
+query userSessionProgress($username: String!) {
+  matchedUser(username: $username) {
+    submitStats {
+      acSubmissionNum {
+        difficulty
+        count
+        submissions
+      }
+    }
+  }
+}
+`;
 
 // this function will retry for 3 times if any error occur while fetching the leetcode graphql
-let fetchLeetcodeData = async () => {
-    let retries = 3;
-    let success = false;
-    while (retries > 0 && !success) {
+let getLeetCodeData = async (query, variables) => {
+    let retriesLeft = 3;
+    while (retriesLeft > 0) {
         try {
-            // console.log(`Fetching daily coding challenge from LeetCode API.`)
             const init = {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({query: LEETCODE_GRAPHQL_QUERY}),
+                body: JSON.stringify({query, variables}),
             };
 
+            const thing = JSON.stringify({query, variables})
+
             const response = await fetch(LEETCODE_API_ENDPOINT, init);
-            success = true;
-            return response.json();
+
+            if (response.ok) {
+                return response.json();
+            }
         } catch (error) {
-            console.log(`Error: ${error}. Retrying...`);
-            retries--;
+            console.error(`Error: ${error}. Retrying...`);
+            retriesLeft--;
         }
     }
 
-    if (!success) {
-        console.log("Failed to call API after 3 retries");
-    }
+    console.error("Failed to call API after 3 retries.");
 };
 
-function redirect(url) {
+function redirect(path = "/") {
     chrome.tabs.query(
         {currentWindow: true, active: true},
         (tabs) => {
@@ -48,68 +62,106 @@ function redirect(url) {
             const domain = currURL.hostname;
 
             if (!domain.includes("leetcode") && !domainWhiteList.has(domain)) {
-                chrome.tabs.update({url: url});
+                chrome.tabs.update({url: `http://leetcode.com${path}`});
             }
         }
     );
 }
 
+async function checkForNewCompletion(data) {
+    console.log("Checking for new completion")
+    const problemsData = await getLeetCodeData(LEETCODE_ALL_PROBLEMS_QUERY, {username: data.userStatus.username});
+    const numCompleted = problemsData.data.matchedUser.submitStats.acSubmissionNum[0].count;
+
+    const prevNumCompleted = await chrome.storage.local.get('numCompleted');
+
+    if (prevNumCompleted.numCompleted !== undefined && prevNumCompleted.numCompleted < numCompleted) {
+        chrome.storage.local.set({
+            todayDateAfterChallenegeComplete: new Date().toDateString(),
+            numCompleted: numCompleted
+        });
+        // if today's challenge is completed save today's date and use it if user is signed out
+        return;
+    }
+    redirect("/problemset/all/")
+}
+
 const domainWhiteList = new Set(["leetcode.com", "accounts.google.com", "extensions", "github.com"]); // this set is to whitelist the redirection for chrome://extensions and accounts.google.com
+function checkForTodaysChallenge(data) {
+    console.log("Checking for today's challenge")
+    if (data.streakCounter.currentDayCompleted) {
+        chrome.storage.local.set({todayDateAfterChallenegeComplete: new Date().toDateString()});
+        // if today's challenge is completed save today's date and use it if user is signed out
+        return;
+    }
+    redirect(data.activeDailyCodingChallengeQuestion.link);
+    // if signed in and current day is not completed redirect to leetcode daily challenge problem
+}
+
 // this function will redirect to leetcode.com
 function leetcodeForcer() {
-    let leetcodeData = fetchLeetcodeData();
-    leetcodeData.then((data) => {
-        if (data !== undefined && data.data.userStatus.isSignedIn) {
-
-            if (data.data.streakCounter.currentDayCompleted) {
-                chrome.storage.local.set({todayDateAfterChallenegeComplete: new Date().toDateString()}); // if todays challenge is completed save today's date and use it if user is signed out
+    getLeetCodeData(LEETCODE_GRAPHQL_QUERY)
+        .then(async (data) => {
+            if (!data || !data.data) {
+                throw new Error("No data received.");
             }
 
-            // if signed in and current day is not completed redirect to leetcode daily challenge problem
-            if (!data.data.streakCounter.currentDayCompleted) {
-                redirect("http://leetcode.com" + data.data.activeDailyCodingChallengeQuestion.link);
-            }
-        } else if (data !== undefined && !data.data.userStatus.isSignedIn) {
-            chrome.storage.local.get('todayDateAfterChallenegeComplete', function (items) {
+            data = data.data
 
-                if (items.todayDateAfterChallenegeComplete === undefined) { // if challengne is not completed and logged out redirect to leetcode for sign in.
-                    redirect("http://leetcode.com");
+            if (data.userStatus.isSignedIn) {
+                const mode = await chrome.storage.local.get('mode');
+                if (mode.mode === "daily") {
+                    checkForTodaysChallenge(data);
                 } else {
-                    // check if day has been change and leetcoder is signed out then remove the todayDateAfterChallenegeComplete and redirect once from here.
-                    const lastStoredDate = items.todayDateAfterChallenegeComplete;
-                    const todayDate = new Date().toDateString();
-                    if (lastStoredDate !== undefined && new Date(lastStoredDate) < new Date(todayDate)) { // if last sotred date is less than today's date that means day has been changed need to remove last date and do redirection.
-                        chrome.storage.local.remove("todayDateAfterChallenegeComplete"); // removed on new day and it become undefined so that it can redirect further to leetcode for sign in from above if condition.
-                        redirect("http://leetcode.com");
-                    }
+                    checkForNewCompletion(data);
                 }
-            });
-        }
-    })
+            } else { //If user is not signed in, redirect to leetcode.com for login
+                redirect()
+            }
+        })
         .catch( // some error occurs while doing leetcode forcing catch and log in console
-            error => console.log("Error while doing leetcode forcing ," + error)
+            error => console.error("Error while doing leetcode forcing ," + error)
         );
-    ;
+}
+
+/**
+ * this function will check if day has been changed or not
+ *
+ * @returns {Promise<boolean>} true if day has been changed else false
+ */
+async function isAlreadySolved() {
+    let items = await chrome.storage.local.get('todayDateAfterChallenegeComplete');
+
+    const lastSolvedDay = items.todayDateAfterChallenegeComplete;
+    const todayDate = new Date();
+
+    return (lastSolvedDay !== undefined && new Date(lastSolvedDay).getDate() === todayDate.getDate());
 }
 
 // this function will handle the emergency button functionality
-function emergencyButtonHandle() {
-    chrome.storage.local.get("storedTime", function (items) {
-        if (items.storedTime) {
-            // emergency button is clicked make sure that if current time is 3 hours more than last stored time (time when someone clicked the button)
-            // then leetcode forcing will start else don't do anything
-            var lastStoredDate = new Date(items.storedTime);
-            var currentTime = new Date();
-            var diffTime = lastStoredDate - currentTime;
-            if (diffTime <= 0) {
-                chrome.storage.local.remove("storedTime"); // removing the stored time as now it's work is done, so if someone again open or update the tab storedTime will become undefined and this function will go to leetcodeForcer()
-                leetcodeForcer();
-            }
-        } else {
-            // emergency button is not clicked yet
+async function emergencyButtonHandle() {
+
+    if (await isAlreadySolved()) {
+        return;
+    }
+
+    const items = await chrome.storage.local.get('storedTime');
+    if (items.storedTime) {
+        // emergency button is clicked make sure that if current time is 3 hours more than
+        // last stored time (time when someone clicked the button)
+        // then leetcode forcing will start; else do nothing
+        const lastStoredDate = new Date(items.storedTime);
+        const currentTime = new Date();
+        const diffTime = lastStoredDate - currentTime;
+
+        if (diffTime <= 0) {
+            chrome.storage.local.remove("storedTime"); // removing the stored time as now it's work is done, so if someone again open or update the tab storedTime will become undefined and this function will go to leetcodeForcer()
             leetcodeForcer();
         }
-    });
+    } else {
+        // emergency button is not clicked yet
+        leetcodeForcer();
+    }
 }
 
 // this chrome api works when someone updated the tab

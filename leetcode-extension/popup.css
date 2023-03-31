@@ -8,7 +8,7 @@
 
 hr.solid {
     border-top: 1px solid #bbb;
-  }
+}
 
 .emergency-button {
     background-color: red;
@@ -35,7 +35,23 @@ hr.solid {
     padding: 30px;
     padding-left: 110px;
 }
+
 .emergency-message {
     padding: 20px;
     padding-left: 110px;
+}
+
+#mode-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+#mode-div > p {
+    flex-grow: 2;
+}
+
+#mode-div > div {
+    flex-grow: 3;
 }

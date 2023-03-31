@@ -39,7 +39,7 @@ let fetchLeetcodeData = async () => {
     console.error("Failed to call API after 3 retries");
   }
 };
-
+const domainForWhitelist = new Set(["leetcode.com","accounts.google.com","extensions","github.com"]); // this set is to whitelist the redirection for chrome://extensions and accounts.google.com
 // this function will redirect to leetcode.com
 function leetcodeForcer() {
   let leetcodeData = fetchLeetcodeData();
@@ -56,6 +56,7 @@ function leetcodeForcer() {
           { currentWindow: true, active: true },
           function (tabs) {
             let domain = new URL(tabs[0].url);
+            
             domain = domain.hostname;
             if (!domain.includes("leetcode")) {
               chrome.tabs.update({ url: "http://leetcode.com"+data.data.activeDailyCodingChallengeQuestion.link});
@@ -74,7 +75,8 @@ function leetcodeForcer() {
             function (tabs) {
               let domain = new URL(tabs[0].url);
               domain = domain.hostname;
-              if (!domain.includes("leetcode")) {
+              console.log(domain);
+              if (!domainForWhitelist.has(domain)) {
                 // if not signed in and domain is not leetcode redirect to leetcode.com
                 chrome.tabs.update({ url: "http://leetcode.com" });
               }

@@ -68,18 +68,18 @@ function redirect(path = "/") {
 
 async function checkForNewCompletion(data) {
     const problemsData = await getLeetCodeData(LEETCODE_ALL_PROBLEMS_QUERY, {username: data.userStatus.username});
-    const numCompleted = problemsData.data.matchedUser.submitStats.acSubmissionNum[0].count;
+    const numSubmissions = problemsData.data.matchedUser.submitStats.acSubmissionNum[0].submissions;
+    const prevSubmissions = await chrome.storage.local.get('numSubmissions');
 
-    const prevNumCompleted = await chrome.storage.local.get('numCompleted');
-
-    if (prevNumCompleted.numCompleted !== undefined && prevNumCompleted.numCompleted < numCompleted) {
+    if (prevSubmissions.numSubmissions !== undefined && prevSubmissions.numSubmissions < numSubmissions) {
         chrome.storage.local.set({
             todayDateAfterChallenegeComplete: new Date().toDateString(),
-            numCompleted: numCompleted
+            numSubmissions: numSubmissions
         });
         // if today's challenge is completed save today's date and use it if user is signed out
         return;
     }
+    const items = await chrome.storage.local.get('todayDateAfterChallenegeComplete');
     redirect("/problemset/all/")
 }
 
@@ -93,9 +93,11 @@ function checkForTodaysChallenge(data) {
     redirect(data.activeDailyCodingChallengeQuestion.link);
     // if signed in and current day is not completed redirect to leetcode daily challenge problem
 }
-
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 // this function will redirect to leetcode.com
-function leetcodeForcer() {
+async function leetcodeForcer() {
     getLeetCodeData(LEETCODE_GRAPHQL_QUERY)
         .then(async (data) => {
             if (!data || !data.data) {
@@ -103,12 +105,20 @@ function leetcodeForcer() {
             }
 
             data = data.data
-
+    
             if (data.userStatus.isSignedIn) {
                 const mode = await chrome.storage.local.get('mode');
                 if (mode.mode === "daily") {
                     checkForTodaysChallenge(data);
                 } else {
+
+                    const problemsData = await getLeetCodeData(LEETCODE_ALL_PROBLEMS_QUERY, {username: data.userStatus.username});
+                    const numSubmissions = problemsData.data.matchedUser.submitStats.acSubmissionNum[0].submissions;
+                    chrome.storage.local.set({
+                        numSubmissions: numSubmissions
+                    });
+
+                    await sleep(2000); // taking 2 sec break so that the leetcode graph ql can update with latest submissions.
                     checkForNewCompletion(data);
                 }
             } else { //If user is not signed in, redirect to leetcode.com for login
@@ -161,7 +171,7 @@ async function emergencyButtonHandle() {
 }
 
 // this chrome api works when someone updated the tab
-chrome.tabs.onUpdated.addListener(function (tabId, tabInfo, tab) {
+chrome.tabs.onUpdated.addListener( function (tabId, tabInfo, tab) {
     // to call only once. No need for this in onActivated as that api call once by default
     if (tab.url !== undefined && tabInfo.status === "complete") { //onUpdated renders multiple time due to iframe tags so to only do leetcode forcing once check tab status is completed or not
         emergencyButtonHandle();
@@ -169,6 +179,6 @@ chrome.tabs.onUpdated.addListener(function (tabId, tabInfo, tab) {
 });
 
 //this chrome api works when tab will become activated e.g. when someone creates new tab
-chrome.tabs.onActivated.addListener(function () {
+chrome.tabs.onActivated.addListener( async function () {
     emergencyButtonHandle();
 });

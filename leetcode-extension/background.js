@@ -38,8 +38,6 @@ let getLeetCodeData = async (query, variables) => {
                 body: JSON.stringify({query, variables}),
             };
 
-            const thing = JSON.stringify({query, variables})
-
             const response = await fetch(LEETCODE_API_ENDPOINT, init);
 
             if (response.ok) {
@@ -69,7 +67,6 @@ function redirect(path = "/") {
 }
 
 async function checkForNewCompletion(data) {
-    console.log("Checking for new completion")
     const problemsData = await getLeetCodeData(LEETCODE_ALL_PROBLEMS_QUERY, {username: data.userStatus.username});
     const numCompleted = problemsData.data.matchedUser.submitStats.acSubmissionNum[0].count;
 
@@ -88,7 +85,6 @@ async function checkForNewCompletion(data) {
 
 const domainWhiteList = new Set(["leetcode.com", "accounts.google.com", "extensions", "github.com"]); // this set is to whitelist the redirection for chrome://extensions and accounts.google.com
 function checkForTodaysChallenge(data) {
-    console.log("Checking for today's challenge")
     if (data.streakCounter.currentDayCompleted) {
         chrome.storage.local.set({todayDateAfterChallenegeComplete: new Date().toDateString()});
         // if today's challenge is completed save today's date and use it if user is signed out

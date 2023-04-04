@@ -59,7 +59,7 @@ function redirect(path = "/") {
             const currURL = new URL(tabs[0].url);
             const domain = currURL.hostname;
 
-            if (!domain.includes("leetcode") && !domainWhiteList.has(domain)) {
+            if (!domainWhiteList.has(domain)) {
                 chrome.tabs.update({url: `http://leetcode.com${path}`});
             }
         }

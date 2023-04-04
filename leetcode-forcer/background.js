@@ -79,7 +79,6 @@ async function checkForNewCompletion(data) {
         // if today's challenge is completed save today's date and use it if user is signed out
         return;
     }
-    const items = await chrome.storage.local.get('todayDateAfterChallenegeComplete');
     redirect("/problemset/all/")
 }
 
@@ -93,7 +92,7 @@ function checkForTodaysChallenge(data) {
     redirect(data.activeDailyCodingChallengeQuestion.link);
     // if signed in and current day is not completed redirect to leetcode daily challenge problem
 }
-function sleep(ms) {
+function sleep(ms) { // this function will stop the code for input milli sec.
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 // this function will redirect to leetcode.com
@@ -179,6 +178,6 @@ chrome.tabs.onUpdated.addListener( function (tabId, tabInfo, tab) {
 });
 
 //this chrome api works when tab will become activated e.g. when someone creates new tab
-chrome.tabs.onActivated.addListener( async function () {
+chrome.tabs.onActivated.addListener(function () {
     emergencyButtonHandle();
 });

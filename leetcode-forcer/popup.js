@@ -3,6 +3,7 @@ const timer = document.getElementById('countdown');
 const disableMessage = document.getElementById('disable-message');
 const emergencyMessage = document.getElementById('emergency-message');
 const modeRadioButtons = document.querySelectorAll('input[name="mode"]');
+const dailyRadioButton = document.getElementById('daily');
 
 function updateTimer() {
     chrome.storage.local.get("storedTime", function (items) {
@@ -69,5 +70,11 @@ button.onclick = () => {
 modeRadioButtons.forEach((radioButton) => {
     radioButton.onclick = () => {
         chrome.storage.local.set({mode: radioButton.value});
+    }
+});
+
+chrome.storage.local.get('mode', function (items) {
+    if(items.mode === "daily") {
+        dailyRadioButton.checked = true;
     }
 });

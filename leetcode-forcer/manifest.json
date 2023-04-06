@@ -1,6 +1,6 @@
 {
     "name": "LeetCode Forcer",
-    "version": "2.0",
+    "version": "2.0.2",
     "description": "An extension which force you to solve daily leetcode problem. Say no to procrastination.",
     "manifest_version": 3,
     "action": {

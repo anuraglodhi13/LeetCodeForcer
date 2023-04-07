@@ -4,6 +4,7 @@ const disableMessage = document.getElementById('disable-message');
 const emergencyMessage = document.getElementById('emergency-message');
 const modeRadioButtons = document.querySelectorAll('input[name="mode"]');
 const dailyRadioButton = document.getElementById('daily');
+const toggleSwitch = document.getElementById('togBtn');
 
 function updateTimer() {
     chrome.storage.local.get("storedTime", function (items) {

@@ -85,8 +85,8 @@ async function checkForNewCompletion(data) {
 const domainWhiteList = new Set(["leetcode.com", "accounts.google.com", "extensions", "github.com"]); // this set is to whitelist the redirection for chrome://extensions and accounts.google.com
 function checkForTodaysChallenge(data) {
     if (data.streakCounter.currentDayCompleted) {
-        chrome.storage.local.set({todayDateAfterChallenegeComplete: new Date().toDateString()});
-        // if today's challenge is completed save today's date and use it if user is signed out
+        chrome.storage.local.set({utcDateStoredForDaily: new Date().getUTCDate()});
+        // if today's challenge is completed save today's date in UTC (leetcode daily problem is changed according to UTC) and use it if user is signed out
         return;
     }
     redirect(data.activeDailyCodingChallengeQuestion.link);
@@ -136,9 +136,17 @@ async function leetcodeForcer() {
  */
 async function isAlreadySolved() {
     let items = await chrome.storage.local.get('todayDateAfterChallenegeComplete');
+    let utcDateStoredForDaily = await chrome.storage.local.get('utcDateStoredForDaily');
+    let mode = await chrome.storage.local.get('mode');
 
     const lastSolvedDay = items.todayDateAfterChallenegeComplete;
     const todayDate = new Date();
+
+    if(mode.mode !== undefined && mode.mode === "daily") { // here we are maintaining the sync between timezones for daily leetcode problem as daily problem changes according to UTC timezone
+        const lastSolvedDateForDailyInUtc = utcDateStoredForDaily.utcDateStoredForDaily;
+        const todayDateInUtc = new Date().getUTCDate();
+        return (lastSolvedDateForDailyInUtc !== undefined && lastSolvedDateForDailyInUtc === todayDateInUtc);
+    }
 
     return (lastSolvedDay !== undefined && new Date(lastSolvedDay).getDate() === todayDate.getDate());
 }

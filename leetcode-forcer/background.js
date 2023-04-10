@@ -56,13 +56,17 @@ function redirect(path = "/") {
     chrome.tabs.query(
         {currentWindow: true, active: true},
         (tabs) => {
+            try {
             const currURL = new URL(tabs[0].url);
             const domain = currURL.hostname;
 
             if (!domainWhiteList.has(domain)) {
                 chrome.tabs.update({url: `http://leetcode.com${path}`});
             }
+        } catch(error) {
+            return;
         }
+    }
     );
 }
 

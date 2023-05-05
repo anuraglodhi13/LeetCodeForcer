@@ -27,6 +27,12 @@ query userSessionProgress($username: String!) {
 }
 `;
 
+let LEETCODE_NEW_UI_QUERY = `query enableNewStudyPlan {
+    feature {
+        enableNewStudyPlan}
+    }
+`;
+
 // this function will retry for 3 times if any error occur while fetching the leetcode graphql
 let getLeetCodeData = async (query, variables) => {
     let retriesLeft = 3;
@@ -86,7 +92,7 @@ async function checkForNewCompletion(data) {
     redirect("/problemset/all/")
 }
 
-const domainWhiteList = new Set(["leetcode.com", "accounts.google.com", "extensions", "github.com"]); // this set is to whitelist the redirection for chrome://extensions and accounts.google.com
+const domainWhiteList = new Set(["leetcode.com", "accounts.google.com", "extensions", "github.com", "drive.google.com"]); // this set is to whitelist the redirection for chrome://extensions and accounts.google.com
 function checkForTodaysChallenge(data) {
     if (data.streakCounter.currentDayCompleted) {
         chrome.storage.local.set({utcDateStoredForDaily: new Date().getUTCDate()});
@@ -132,7 +138,14 @@ async function leetcodeForcer() {
             error => console.error("Error while doing leetcode forcing ," + error)
         );
 }
-
+getLeetCodeData(LEETCODE_NEW_UI_QUERY).then(
+    async (data) => {
+        if (!data || !data.data) {
+            throw new Error("No data received.");
+        }
+        console.log(data);
+    }
+);
 /**
  * this function will check if day has been changed or not
  *
